@@ -9,7 +9,6 @@ import {
   ListItemIcon,
   Checkbox,
   Box,
-  LinearProgress,
   CircularProgress,
   Chip,
   Tab,
@@ -29,7 +28,6 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Resources from './Resources';
@@ -45,32 +43,18 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 function ManagerChecklist() {
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState('');
   const [openAddTask, setOpenAddTask] = useState(false);
   const [openAddProject, setOpenAddProject] = useState(false);
-  const [newTask, setNewTask] = useState({
-    task: '',
-    projectId: '',
-    assignedTo: ''
-  });
   const [newProject, setNewProject] = useState({ name: '' });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [tabValue, setTabValue] = useState(0);
-
-  useEffect(() => {
-    fetchProjects();
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    if (selectedProject) {
-      fetchTasks(selectedProject);
-    }
-  }, [selectedProject]);
+  const [taskName, setTaskName] = useState('');
+  const [newTask, setNewTask] = useState('');
+  const [success, setSuccess] = useState('');
 
   const fetchProjects = async () => {
     try {
@@ -82,47 +66,40 @@ function ManagerChecklist() {
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      console.log('Fetching users from API...');
-      const response = await axios.get('http://localhost:3001/api/users');
-      console.log('Users fetched successfully:', response.data);
-      setUsers(response.data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setError(error.response?.data?.details || error.response?.data?.error || 'Failed to load users');
-    }
-  };
+  useEffect(() => {
+    fetchProjects();
+  }, []);
 
   const fetchTasks = async (projectId) => {
+    if (!projectId) {
+      setTasks([]);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching tasks for project:', projectId);
       const response = await axios.get(`http://localhost:3001/api/checklist/manager?projectId=${projectId}`);
+      console.log('Tasks fetched:', response.data);
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      setError('Failed to load tasks');
+      setError(error.response?.data?.error || 'Failed to load tasks');
+      setTasks([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddTask = async () => {
-    try {
-      const response = await axios.post('http://localhost:3001/api/checklist', {
-        task: newTask.task,
-        projectId: newTask.projectId,
-        assignedTo: newTask.assignedTo || null
-      });
-      setTasks([...tasks, response.data]);
-      setOpenAddTask(false);
-      setNewTask({ task: '', projectId: '', assignedTo: '' });
-    } catch (error) {
-      console.error('Error adding task:', error);
-      setError(error.response?.data?.details || 'Failed to add task');
+  useEffect(() => {
+    if (selectedProject) {
+      console.log('Selected project changed:', selectedProject);
+      fetchTasks(selectedProject);
+    } else {
+      setTasks([]);
     }
-  };
+  }, [selectedProject]);
 
   const handleAddProject = async () => {
     try {
@@ -133,30 +110,6 @@ function ManagerChecklist() {
     } catch (error) {
       console.error('Error adding project:', error);
       setError('Failed to add project');
-    }
-  };
-
-  const handleDeleteProject = async (id) => {
-    try {
-      await axios.delete(`http://localhost:3001/api/projects/${id}`);
-      fetchProjects();
-      if (selectedProject === id) {
-        setSelectedProject('');
-        setTasks([]);
-      }
-    } catch (error) {
-      console.error('Error deleting project:', error);
-      setError('Failed to delete project');
-    }
-  };
-
-  const handleUpdateProject = async (id, name) => {
-    try {
-      await axios.put(`http://localhost:3001/api/projects/${id}`, { name });
-      fetchProjects();
-    } catch (error) {
-      console.error('Error updating project:', error);
-      setError('Failed to update project');
     }
   };
 
@@ -184,6 +137,72 @@ function ManagerChecklist() {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleClose = () => {
+    setOpenAddTask(false);
+    setTaskName('');
+    setSelectedProject('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedProject) {
+      setError('Please select a project first');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:3001/api/checklist', {
+        task: newTask,
+        projectId: selectedProject,
+        status: 'pending'
+      });
+
+      setTasks([response.data, ...tasks]);
+      setNewTask('');
+      setSuccess('Task added successfully');
+      setOpenAddTask(false);
+    } catch (error) {
+      setError('Failed to add task');
+      console.error('Error adding task:', error);
+    }
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    if (!projectId) return;
+    
+    try {
+      setLoading(true);
+      await axios.delete(`http://localhost:3001/api/projects/${projectId}`);
+      
+      // Clear selected project if it was deleted
+      if (selectedProject === projectId) {
+        setSelectedProject('');
+        setTasks([]);
+      }
+      
+      // Refresh projects list
+      fetchProjects();
+      setSuccess('Project deleted successfully');
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      setError(error.response?.data?.error || 'Failed to delete project');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      await axios.put(`http://localhost:3001/api/checklist/${taskId}`, { status: newStatus });
+      setTasks(tasks.map(task => 
+        task.id === taskId ? { ...task, status: newStatus } : task
+      ));
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      setError('Failed to update task status');
+    }
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -228,8 +247,8 @@ function ManagerChecklist() {
         </FormControl>
 
         {selectedProject && (
-          <>
-            <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -238,120 +257,108 @@ function ManagerChecklist() {
               >
                 Add Task
               </Button>
-              <Tabs value={tabValue} onChange={handleTabChange} centered>
-                <Tab label="All Tasks" />
-                <Tab label="Pending" />
-                <Tab label="Completed" />
-              </Tabs>
             </Box>
+            <Tabs value={tabValue} onChange={handleTabChange} centered>
+              <Tab label="All Tasks" />
+              <Tab label="Pending" />
+              <Tab label="Completed" />
+            </Tabs>
+          </Box>
+        )}
 
-            {error && (
-              <Paper sx={{ p: 2, mb: 2, bgcolor: '#ffebee' }}>
-                <Typography color="error">{error}</Typography>
-              </Paper>
-            )}
+        {error && (
+          <Paper sx={{ p: 2, mb: 2, bgcolor: '#ffebee' }}>
+            <Typography color="error">{error}</Typography>
+          </Paper>
+        )}
 
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <List>
-                {filteredTasks.map((task) => (
-                  <ListItem
-                    key={task.id}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <List>
+            {filteredTasks.map((task) => (
+              <ListItem
+                key={task.id}
+                sx={{
+                  bgcolor: 'background.paper',
+                  mb: 1,
+                  borderRadius: 1,
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <Checkbox
+                    edge="start"
+                    checked={task.status === 'complete'}
+                    onChange={() => handleStatusChange(task.id, task.status === 'complete' ? 'pending' : 'complete')}
+                    color="primary"
+                    disabled
+                  />
+                </ListItemIcon>
+                <Box sx={{ flex: 1 }}>
+                  <Typography
                     sx={{
-                      bgcolor: 'background.paper',
-                      mb: 1,
-                      borderRadius: 1,
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                      },
+                      textDecoration: task.status === 'complete' ? 'line-through' : 'none',
+                      color: task.status === 'complete' ? 'text.secondary' : 'text.primary'
                     }}
                   >
-                    <ListItemIcon>
-                      <Checkbox
-                        edge="start"
-                        checked={task.status === 'complete'}
-                        disabled
-                        color="primary"
-                      />
-                    </ListItemIcon>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        sx={{
-                          textDecoration: task.status === 'complete' ? 'line-through' : 'none',
-                          color: task.status === 'complete' ? 'text.secondary' : 'text.primary'
-                        }}
-                      >
-                        {task.task}
-                      </Typography>
-                      <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        <Chip
-                          label={task.project_name || 'No Project'}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={task.status}
-                          size="small"
-                          color={task.status === 'complete' ? 'success' : 'default'}
-                          variant="outlined"
-                        />
-                        {task.assigned_to_email && (
-                          <Chip
-                            label={`Assigned to: ${task.assigned_to_email}`}
-                            size="small"
-                            color="secondary"
-                            variant="outlined"
-                          />
-                        )}
-                      </Box>
-                    </Box>
-                    <IconButton onClick={(e) => handleMenuClick(e, task)}>
-                      <MoreVertIcon />
-                    </IconButton>
-                  </ListItem>
-                ))}
-              </List>
-            )}
-          </>
+                    {task.task}
+                  </Typography>
+                  <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Chip
+                      label={task.status}
+                      size="small"
+                      color={task.status === 'complete' ? 'success' : 'default'}
+                      sx={{ textTransform: 'capitalize' }}
+                    />
+                  </Box>
+                </Box>
+                <IconButton onClick={(e) => handleMenuClick(e, task)}>
+                  <MoreVertIcon />
+                </IconButton>
+              </ListItem>
+            ))}
+          </List>
         )}
       </Paper>
 
       {selectedProject && <Resources projectId={selectedProject} isManager={true} />}
 
-      <Dialog open={openAddTask} onClose={() => setOpenAddTask(false)}>
+      <Dialog open={openAddTask} onClose={handleClose}>
         <DialogTitle>Add New Task</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Task"
+            label="Task Name"
             fullWidth
-            value={newTask.task}
-            onChange={(e) => setNewTask({ ...newTask, task: e.target.value })}
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
+            required
           />
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Assign To</InputLabel>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel id="project-select-label">Project</InputLabel>
             <Select
-              value={newTask.assignedTo}
-              label="Assign To"
-              onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
+              labelId="project-select-label"
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              required
             >
-              <MenuItem value="">Unassigned</MenuItem>
-              {users.map((user) => (
-                <MenuItem key={user.id} value={user.id}>
-                  {user.email}
+              {projects.map((project) => (
+                <MenuItem key={project.id} value={project.id}>
+                  {project.name}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenAddTask(false)}>Cancel</Button>
-          <Button onClick={handleAddTask} variant="contained">
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained" disabled={loading}>
             Add
           </Button>
         </DialogActions>

@@ -191,37 +191,25 @@ sql.connect(config).then(async pool => {
 
   // API Endpoints
   app.get('/api/checklist', async (req, res) => {
-    const { projectId } = req.query;
-    const userId = req.headers['user-id']; // Get user ID from request headers
-
-    if (!userId) {
-      return res.status(401).json({ error: 'User ID not provided' });
-    }
-
     try {
-      let query = `
-        SELECT t.*, p.name as project_name
-        FROM tasks t
-        LEFT JOIN projects p ON t.project_id = p.id
-        WHERE t.assigned_to = @userId
-      `;
-
-      if (projectId) {
-        query += ` AND t.project_id = @projectId`;
+      const { projectId } = req.query;
+      if (!projectId) {
+        return res.status(400).json({ error: 'Project ID is required' });
       }
 
-      query += ` ORDER BY t.status, t.id DESC`;
+      const result = await pool.request()
+        .input('projectId', sql.Int, projectId)
+        .query(`
+          SELECT t.*, p.name as project_name
+          FROM tasks t
+          JOIN projects p ON t.project_id = p.id
+          WHERE t.project_id = @projectId
+          ORDER BY t.created_at DESC
+        `);
 
-      const request = pool.request();
-      request.input('userId', sql.Int, userId);
-      if (projectId) {
-        request.input('projectId', sql.Int, projectId);
-      }
-
-      const result = await request.query(query);
       res.json(result.recordset);
-    } catch (err) {
-      console.error('Error fetching checklist:', err);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
       res.status(500).json({ error: 'Failed to fetch tasks' });
     }
   });
@@ -237,12 +225,13 @@ sql.connect(config).then(async pool => {
 
   app.get('/api/projects', async (req, res) => {
     try {
+      console.log('Fetching projects...');
       const result = await pool.request()
         .query(`
           SELECT 
             p.id,
             p.name,
-            ISNULL(p.created_at, GETDATE()) as created_at,
+            p.created_at,
             COUNT(DISTINCT t.id) as task_count,
             COUNT(DISTINCT r.id) as resource_count
           FROM projects p
@@ -263,7 +252,7 @@ sql.connect(config).then(async pool => {
     }
   });
 
-  // Create new project
+  // Add new project
   app.post('/api/projects', async (req, res) => {
     try {
       const { name } = req.body;
@@ -272,7 +261,7 @@ sql.connect(config).then(async pool => {
       }
 
       const result = await pool.request()
-        .input('name', sql.NVarChar(255), name)
+        .input('name', sql.NVarChar, name)
         .query(`
           INSERT INTO projects (name)
           OUTPUT INSERTED.id, INSERTED.name, INSERTED.created_at
@@ -281,8 +270,8 @@ sql.connect(config).then(async pool => {
 
       res.status(201).json(result.recordset[0]);
     } catch (error) {
-      console.error('Error creating project:', error);
-      res.status(500).json({ error: 'Failed to create project' });
+      console.error('Error adding project:', error);
+      res.status(500).json({ error: 'Failed to add project' });
     }
   });
 
@@ -298,7 +287,7 @@ sql.connect(config).then(async pool => {
 
       const result = await pool.request()
         .input('id', sql.Int, id)
-        .input('name', sql.NVarChar(255), name)
+        .input('name', sql.NVarChar, name)
         .query(`
           UPDATE projects
           SET name = @name
@@ -317,61 +306,45 @@ sql.connect(config).then(async pool => {
     }
   });
 
-  // Delete project and all associated resources
+  // Delete project
   app.delete('/api/projects/:id', async (req, res) => {
     try {
       const { id } = req.params;
+      console.log('Attempting to delete project:', id);
 
-      // Start a transaction
-      const transaction = new sql.Transaction(pool);
+      // First check if the project exists
+      const projectCheck = await pool.request()
+        .input('id', sql.Int, id)
+        .query('SELECT id FROM projects WHERE id = @id');
 
-      try {
-        // First, get all resources for this project
-        const resourcesResult = await transaction.request()
-          .input('projectId', sql.Int, id)
-          .query('SELECT file_path FROM resources WHERE project_id = @projectId');
-
-        // Delete files from the filesystem
-        for (const resource of resourcesResult.recordset) {
-          if (resource.file_path) {
-            const filePath = path.join(__dirname, 'uploads', resource.file_path);
-            if (fs.existsSync(filePath)) {
-              fs.unlinkSync(filePath);
-            }
-          }
-        }
-
-        // Delete all resources for this project
-        await transaction.request()
-          .input('projectId', sql.Int, id)
-          .query('DELETE FROM resources WHERE project_id = @projectId');
-
-        // Delete all tasks for this project
-        await transaction.request()
-          .input('projectId', sql.Int, id)
-          .query('DELETE FROM tasks WHERE project_id = @projectId');
-
-        // Finally, delete the project
-        const result = await transaction.request()
-          .input('id', sql.Int, id)
-          .query('DELETE FROM projects WHERE id = @id');
-
-        if (!result.rowsAffected[0]) {
-          await transaction.rollback();
-          return res.status(404).json({ error: 'Project not found' });
-        }
-
-        // Commit the transaction
-        await transaction.commit();
-        res.json({ message: 'Project and all associated resources deleted successfully' });
-      } catch (error) {
-        // Rollback the transaction if there's an error
-        await transaction.rollback();
-        throw error;
+      if (projectCheck.recordset.length === 0) {
+        console.error('Project not found:', id);
+        return res.status(404).json({ error: 'Project not found' });
       }
+
+      // Delete associated resources
+      await pool.request()
+        .input('projectId', sql.Int, id)
+        .query('DELETE FROM resources WHERE project_id = @projectId');
+
+      // Delete associated tasks
+      await pool.request()
+        .input('projectId', sql.Int, id)
+        .query('DELETE FROM tasks WHERE project_id = @projectId');
+
+      // Delete the project
+      await pool.request()
+        .input('id', sql.Int, id)
+        .query('DELETE FROM projects WHERE id = @id');
+
+      console.log('Project deleted successfully:', id);
+      res.json({ message: 'Project deleted successfully' });
     } catch (error) {
       console.error('Error deleting project:', error);
-      res.status(500).json({ error: 'Failed to delete project' });
+      res.status(500).json({ 
+        error: 'Failed to delete project',
+        details: error.message
+      });
     }
   });
 
@@ -396,75 +369,76 @@ sql.connect(config).then(async pool => {
     }
   });
 
-  // Add new task (manager only)
-  app.post('/api/checklist', async (req, res) => {
-    const { task, projectId, status, assignedTo } = req.body;
-    
-    // Validate required fields
-    if (!task || !projectId) {
-      return res.status(400).json({ 
-        error: 'Task and project ID are required',
-        details: 'Please provide both task name and project ID'
-      });
-    }
-
+  // Get checklist items for manager role
+  app.get('/api/checklist/manager', async (req, res) => {
     try {
-      // First verify if the project exists
+      const { projectId } = req.query;
+      console.log('Fetching tasks for project:', projectId);
+
+      if (!projectId) {
+        console.error('Project ID is missing');
+        return res.status(400).json({ error: 'Project ID is required' });
+      }
+
+      // First check if the project exists
       const projectCheck = await pool.request()
         .input('projectId', sql.Int, projectId)
         .query('SELECT id FROM projects WHERE id = @projectId');
 
-      if (!projectCheck.recordset.length) {
-        return res.status(404).json({ 
-          error: 'Project not found',
-          details: `No project found with ID: ${projectId}`
-        });
+      if (projectCheck.recordset.length === 0) {
+        console.error('Project not found:', projectId);
+        return res.status(404).json({ error: 'Project not found' });
       }
 
-      // If assignedTo is provided, verify if the user exists
-      if (assignedTo) {
-        const userCheck = await pool.request()
-          .input('assignedTo', sql.Int, assignedTo)
-          .query('SELECT id FROM users WHERE id = @assignedTo');
-
-        if (!userCheck.recordset.length) {
-          return res.status(404).json({ 
-            error: 'User not found',
-            details: `No user found with ID: ${assignedTo}`
-          });
-        }
-      }
-
-      // Insert the task
       const result = await pool.request()
-        .input('task', sql.VarChar(255), task)
         .input('projectId', sql.Int, projectId)
-        .input('status', sql.NVarChar(50), status || 'pending')
-        .input('assignedTo', sql.Int, assignedTo || null)
         .query(`
-          INSERT INTO tasks (task, project_id, status, assigned_to)
-          VALUES (@task, @projectId, @status, @assignedTo);
-          SELECT SCOPE_IDENTITY() AS id;
-        `);
-      
-      // Return the created task
-      const newTask = await pool.request()
-        .input('id', sql.Int, result.recordset[0].id)
-        .query(`
-          SELECT t.*, p.name as project_name, u.email as assigned_to_email
+          SELECT 
+            t.id,
+            t.task,
+            t.status,
+            t.created_at,
+            t.project_id,
+            p.name as project_name
           FROM tasks t
-          LEFT JOIN projects p ON t.project_id = p.id
-          LEFT JOIN users u ON t.assigned_to = u.id
-          WHERE t.id = @id
+          JOIN projects p ON t.project_id = p.id
+          WHERE t.project_id = @projectId
+          ORDER BY t.created_at DESC
         `);
 
-      res.status(201).json(newTask.recordset[0]);
-    } catch (err) {
-      console.error('Error adding task:', err);
+      console.log('Tasks fetched successfully:', result.recordset);
+      res.json(result.recordset);
+    } catch (error) {
+      console.error('Error fetching manager tasks:', error);
       res.status(500).json({ 
-        error: 'Failed to add task',
-        details: err.message
+        error: 'Failed to fetch tasks',
+        details: error.message
       });
+    }
+  });
+
+  // Add new task
+  app.post('/api/checklist', async (req, res) => {
+    try {
+      const { task, projectId, status = 'pending' } = req.body;
+      if (!task || !projectId) {
+        return res.status(400).json({ error: 'Task and Project ID are required' });
+      }
+
+      const result = await pool.request()
+        .input('task', sql.NVarChar, task)
+        .input('projectId', sql.Int, projectId)
+        .input('status', sql.NVarChar, status)
+        .query(`
+          INSERT INTO tasks (task, project_id, status)
+          OUTPUT INSERTED.*
+          VALUES (@task, @projectId, @status)
+        `);
+
+      res.status(201).json(result.recordset[0]);
+    } catch (error) {
+      console.error('Error adding task:', error);
+      res.status(500).json({ error: 'Failed to add task' });
     }
   });
 
