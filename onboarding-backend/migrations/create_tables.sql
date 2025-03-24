@@ -3,7 +3,7 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[pr
 BEGIN
   CREATE TABLE projects (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
+    project_name NVARCHAR(255) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT GETDATE()
   )
 END
@@ -13,6 +13,12 @@ BEGIN
   IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[projects]') AND name = 'created_at')
   BEGIN
     ALTER TABLE projects ADD created_at DATETIME NOT NULL DEFAULT GETDATE()
+  END
+
+  -- Rename name column to project_name if it exists
+  IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[projects]') AND name = 'name')
+  BEGIN
+    EXEC sp_rename 'projects.name', 'project_name', 'COLUMN'
   END
 END
 GO

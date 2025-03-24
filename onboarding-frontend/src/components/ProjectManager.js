@@ -46,7 +46,7 @@ function ProjectManager() {
   const handleAddProject = async () => {
     if (!newProjectName) return;
     try {
-      await axios.post('http://localhost:3001/api/projects', { name: newProjectName });
+      await axios.post('http://localhost:3001/api/projects', { project_name: newProjectName });
       setNewProjectName('');
       fetchProjects();
     } catch (error) {
@@ -65,14 +65,14 @@ function ProjectManager() {
 
   const handleEditClick = (project) => {
     setEditingProject(project);
-    setEditProjectName(project.name);
+    setEditProjectName(project.project_name);
     setEditDialogOpen(true);
   };
 
   const handleEditSave = async () => {
     if (!editProjectName || !editingProject) return;
     try {
-      await axios.put(`http://localhost:3001/api/projects/${editingProject.id}`, { name: editProjectName });
+      await axios.put(`http://localhost:3001/api/projects/${editingProject.id}`, { project_name: editProjectName });
       setEditDialogOpen(false);
       fetchProjects();
     } catch (error) {
@@ -112,7 +112,7 @@ function ProjectManager() {
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h6">{project.name}</Typography>
+                    <Typography variant="h6">{project.project_name}</Typography>
                     <Box>
                       <IconButton 
                         color="primary" 

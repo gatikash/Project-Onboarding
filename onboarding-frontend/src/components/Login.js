@@ -2,74 +2,60 @@ import React, { useState } from 'react';
 import {
   Container,
   Paper,
-  Typography,
   TextField,
   Button,
+  Typography,
   Box,
-  CircularProgress,
-  Alert
+  styled,
+  CircularProgress
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
+  marginTop: theme.spacing(8),
   padding: theme.spacing(4),
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  marginTop: theme.spacing(8),
-  background: 'linear-gradient(45deg, #2196f3 30%, #21CBF3 90%)',
-  color: 'white',
+  background: 'linear-gradient(45deg, #ffffff 30%, #f5f5f5 90%)',
   borderRadius: theme.spacing(2),
+  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
 }));
 
-const Form = styled('form')(({ theme }) => ({
-  width: '100%',
-  marginTop: theme.spacing(1),
-}));
-
-function Login({ onLogin }) {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError('');
 
     try {
-      // Simple validation
-      if (!formData.email || !formData.password) {
-        throw new Error('Please fill in all fields');
-      }
-
-      // Make API call to validate credentials
-      const response = await axios.post('http://localhost:3001/api/auth/login', formData);
+      const response = await axios.post('http://localhost:3001/api/auth/login', {
+        email,
+        password
+      });
 
       if (response.data.success) {
-        const { user } = response.data;
-        onLogin({
-          email: user.email,
-          role: user.role.toUpperCase(),
-          id: user.id
-        });
+        // Store user data in localStorage
+        localStorage.setItem('userId', response.data.id);
+        localStorage.setItem('userEmail', response.data.email);
+        localStorage.setItem('userRoleId', response.data.role_id);
+        localStorage.setItem('roleName', response.data.role_name);
+
+        // Force a page reload and redirect to dashboard
+        window.location.href = '/dashboard';
       } else {
-        throw new Error(response.data.message || 'Login failed');
+        setError(response.data.error || 'Login failed');
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      setError(error.response?.data?.message || error.message || 'Invalid email or password. Please try again.');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.error || 'Invalid email or password');
     } finally {
       setLoading(false);
     }
@@ -78,20 +64,14 @@ function Login({ onLogin }) {
   return (
     <Container component="main" maxWidth="xs">
       <StyledPaper elevation={3}>
-        <Typography component="h1" variant="h4" gutterBottom>
+        <Typography component="h1" variant="h5" gutterBottom>
           Welcome Back
         </Typography>
-        <Typography variant="subtitle1" sx={{ opacity: 0.9, mb: 3 }}>
-          Sign in to continue
+        <Typography variant="body2" color="textSecondary" gutterBottom>
+          Please sign in to continue
         </Typography>
-
-        {error && (
-          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <Form onSubmit={handleSubmit}>
+        
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
           <TextField
             margin="normal"
             required
@@ -101,29 +81,9 @@ function Login({ onLogin }) {
             name="email"
             autoComplete="email"
             autoFocus
-            value={formData.email}
-            onChange={handleChange}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                '& fieldset': {
-                  borderColor: 'rgba(255, 255, 255, 0.3)',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'rgba(255, 255, 255, 0.5)',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: 'white',
-                },
-                color: 'white',
-                '& .MuiInputLabel-root': {
-                  color: 'rgba(255, 255, 255, 0.7)',
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: 'white',
-                },
-              },
-            }}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
           />
           <TextField
             margin="normal"
@@ -134,55 +94,37 @@ function Login({ onLogin }) {
             type="password"
             id="password"
             autoComplete="current-password"
-            value={formData.password}
-            onChange={handleChange}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                '& fieldset': {
-                  borderColor: 'rgba(255, 255, 255, 0.3)',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'rgba(255, 255, 255, 0.5)',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: 'white',
-                },
-                color: 'white',
-                '& .MuiInputLabel-root': {
-                  color: 'rgba(255, 255, 255, 0.7)',
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: 'white',
-                },
-              },
-            }}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
           />
+          
+          {error && (
+            <Typography color="error" sx={{ mt: 1 }}>
+              {error}
+            </Typography>
+          )}
+          
           <Button
             type="submit"
             fullWidth
             variant="contained"
+            disabled={loading}
             sx={{
               mt: 3,
               mb: 2,
-              bgcolor: 'white',
-              color: '#2196f3',
+              background: 'linear-gradient(45deg, #2196f3 30%, #21CBF3 90%)',
               '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                background: 'linear-gradient(45deg, #1976d2 30%, #1cb5e0 90%)',
               },
             }}
-            disabled={loading}
           >
-            {loading ? (
-              <CircularProgress size={24} color="primary" />
-            ) : (
-              'Sign In'
-            )}
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
           </Button>
-        </Form>
+        </Box>
       </StyledPaper>
     </Container>
   );
-}
+};
 
 export default Login; 

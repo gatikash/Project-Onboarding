@@ -19,6 +19,7 @@ import {
   TableRow,
   Alert,
   Snackbar,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -43,13 +44,21 @@ function Projects() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await axios.get('http://localhost:3001/api/projects');
-      console.log('Projects fetched:', response.data);
-      setProjects(response.data);
+      console.log('Projects response:', response.data);
+      
+      if (response.data.success && Array.isArray(response.data.projects)) {
+        setProjects(response.data.projects);
+      } else {
+        console.error('Invalid response format:', response.data);
+        setError('Failed to fetch projects: Invalid response format');
+        setProjects([]);
+      }
     } catch (error) {
-      const errorMessage = error.response?.data?.details || error.response?.data?.error || 'Failed to fetch projects';
-      setError(errorMessage);
-      console.error('Error fetching projects:', error.response?.data || error);
+      console.error('Error fetching projects:', error.response || error);
+      setError(error.response?.data?.error || 'Failed to fetch projects');
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -58,7 +67,7 @@ function Projects() {
   const handleOpenDialog = (project = null) => {
     if (project) {
       setEditingProject(project);
-      setProjectName(project.name);
+      setProjectName(project.project_name);
     } else {
       setEditingProject(null);
       setProjectName('');
@@ -73,42 +82,53 @@ function Projects() {
   };
 
   const handleSubmit = async () => {
+    if (!projectName.trim()) {
+      setError('Project name is required');
+      return;
+    }
+
     try {
       setLoading(true);
+      setError('');
+      
       if (editingProject) {
+        // Update existing project
         await axios.put(`http://localhost:3001/api/projects/${editingProject.id}`, {
-          name: projectName
+          project_name: projectName
         });
         setSuccess('Project updated successfully');
       } else {
+        // Create new project
         await axios.post('http://localhost:3001/api/projects', {
-          name: projectName
+          project_name: projectName
         });
         setSuccess('Project created successfully');
       }
+      
       handleCloseDialog();
-      fetchProjects();
+      await fetchProjects(); // Refresh the projects list
     } catch (error) {
+      console.error('Error saving project:', error.response || error);
       setError(error.response?.data?.error || 'Failed to save project');
-      console.error('Error saving project:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (projectId) => {
-    if (!window.confirm('Are you sure you want to delete this project? This will also delete all associated resources.')) {
+    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
       return;
     }
 
     try {
       setLoading(true);
+      setError('');
       await axios.delete(`http://localhost:3001/api/projects/${projectId}`);
       setSuccess('Project deleted successfully');
-      fetchProjects();
+      await fetchProjects(); // Refresh the projects list
     } catch (error) {
+      console.error('Error deleting project:', error.response || error);
       setError(error.response?.data?.error || 'Failed to delete project');
-      console.error('Error deleting project:', error);
     } finally {
       setLoading(false);
     }
@@ -131,41 +151,65 @@ function Projects() {
           </Button>
         </Box>
 
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Project Name</TableCell>
-                <TableCell>Created At</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {projects.map((project) => (
-                <TableRow key={project.id}>
-                  <TableCell>{project.name}</TableCell>
-                  <TableCell>{new Date(project.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleOpenDialog(project)}
-                      disabled={loading}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDelete(project.id)}
-                      disabled={loading}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Project Name</TableCell>
+                  <TableCell>Created At</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {projects.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">
+                      No projects found. Click "Add New Project" to create one.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  projects.map((project) => (
+                    <TableRow key={project.id}>
+                      <TableCell>{project.project_name}</TableCell>
+                      <TableCell>
+                        {new Date(project.created_at).toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleOpenDialog(project)}
+                          disabled={loading}
+                          title="Edit project"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleDelete(project.id)}
+                          disabled={loading}
+                          title="Delete project"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>

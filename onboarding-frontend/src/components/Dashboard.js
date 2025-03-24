@@ -1,199 +1,170 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Grid,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Box,
   Paper,
-  useTheme,
-  useMediaQuery,
+  Typography,
+  Box
 } from '@mui/material';
 import {
-  Checklist as ChecklistIcon,
-  Folder as FolderIcon,
-  Group as GroupIcon,
-  Lightbulb as LightbulbIcon,
-  Logout as LogoutIcon,
+  Description as DescriptionIcon,
+  People as PeopleIcon,
+  PlaylistAddCheck as ChecklistIcon,
+  AssignmentTurnedIn as TasksIcon
 } from '@mui/icons-material';
 
 function Dashboard() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
-  const [userRole, setUserRole] = useState(null);
+  const roleName = localStorage.getItem('roleName');
+  const isManager = roleName === 'MANAGER';
 
-  useEffect(() => {
-    const role = localStorage.getItem('userRole');
-    if (!role) {
-      navigate('/');
-      return;
-    }
-    setUserRole(role);
-  }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userId');
-    navigate('/');
+  const handleCardClick = (route) => {
+    navigate(route);
   };
-
-  const getBaseDashboardItems = () => {
-    const items = [
-      {
-        title: 'Onboarding Checklist',
-        description: 'Track your progress through the onboarding process with our comprehensive checklist.',
-        icon: <ChecklistIcon sx={{ fontSize: 40 }} />,
-        path: userRole === 'MANAGER' ? '/manager-checklist' : '/checklist',
-        color: '#2196f3'
-      },
-      {
-        title: 'Resources',
-        description: 'Access project-specific resources and materials',
-        icon: <GroupIcon sx={{ fontSize: 40 }} />,
-        path: '/resources',
-        color: '#ff9800'
-      }
-    ];
-
-    // Add Projects card only for MANAGER role
-    if (userRole === 'MANAGER') {
-      items.splice(1, 0, {
-        title: 'Projects',
-        description: 'View and manage your assigned projects and tasks.',
-        icon: <FolderIcon sx={{ fontSize: 40 }} />,
-        path: '/projects',
-        color: '#4caf50'
-      });
-    }
-
-    return items;
-  };
-
-  if (!userRole) {
-    return null;
-  }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: 4, 
-          background: 'linear-gradient(45deg, #2196f3 30%, #21CBF3 90%)',
-          color: 'white',
-          borderRadius: 2,
-          mb: 4,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
-      >
-        <Box>
-          <Typography variant="h3" gutterBottom>
-            Welcome to Your Dashboard
-          </Typography>
-          <Typography variant="h6" sx={{ opacity: 0.9 }}>
-            Your central hub for managing onboarding tasks and resources
-          </Typography>
-        </Box>
-      </Paper>
+      <Typography variant="h3" gutterBottom>
+        Welcome to Your Dashboard
+      </Typography>
+      <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+        {isManager ? 'Manager Dashboard' : 'Employee Dashboard'} - Track your onboarding progress
+      </Typography>
 
-      <Grid container spacing={3}>
-        {getBaseDashboardItems().map((item, index) => (
-          <Grid item xs={12} md={4} key={index}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'transform 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 6
-                }
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Box 
-                    sx={{ 
-                      p: 1, 
-                      borderRadius: 1, 
-                      bgcolor: `${item.color}20`,
-                      mr: 2
-                    }}
-                  >
-                    <Box sx={{ color: item.color }}>
-                      {item.icon}
-                    </Box>
-                  </Box>
-                  <Typography variant="h5" component="h2" gutterBottom>
-                    {item.title}
-                  </Typography>
-                </Box>
-                <Typography variant="body1" color="text.secondary" paragraph>
-                  {item.description}
+      <Grid container spacing={3} sx={{ mt: 2 }}>
+        {/* Resources Card - Visible to all */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Paper
+            sx={{
+              p: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: 'pointer',
+              bgcolor: '#9c27b0',
+              color: 'white',
+              '&:hover': {
+                bgcolor: '#7b1fa2',
+                transform: 'scale(1.02)',
+                transition: 'all 0.2s ease-in-out',
+              },
+            }}
+            onClick={() => handleCardClick('/resources')}
+          >
+            <DescriptionIcon sx={{ fontSize: 40, mb: 2 }} />
+            <Typography variant="h5" component="h2" gutterBottom>
+              Resources
+            </Typography>
+            <Typography variant="body2" align="center">
+              Access onboarding resources and materials
+            </Typography>
+          </Paper>
+        </Grid>
+
+        {/* User Checklist Card - Visible to all */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Paper
+            sx={{
+              p: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: 'pointer',
+              bgcolor: '#2196f3',
+              color: 'white',
+              '&:hover': {
+                bgcolor: '#1976d2',
+                transform: 'scale(1.02)',
+                transition: 'all 0.2s ease-in-out',
+              },
+            }}
+            onClick={() => handleCardClick('/checklist')}
+          >
+            <ChecklistIcon sx={{ fontSize: 40, mb: 2 }} />
+            <Typography variant="h5" component="h2" gutterBottom>
+              My Checklist
+            </Typography>
+            <Typography variant="body2" align="center">
+              View and manage your tasks
+            </Typography>
+          </Paper>
+        </Grid>
+
+        {/* Manager-only cards */}
+        {isManager && (
+          <>
+            <Grid item xs={12} sm={6} md={4}>
+              <Paper
+                sx={{
+                  p: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  bgcolor: '#4caf50',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: '#388e3c',
+                    transform: 'scale(1.02)',
+                    transition: 'all 0.2s ease-in-out',
+                  },
+                }}
+                onClick={() => handleCardClick('/users')}
+              >
+                <PeopleIcon sx={{ fontSize: 40, mb: 2 }} />
+                <Typography variant="h5" component="h2" gutterBottom>
+                  User Master
                 </Typography>
-              </CardContent>
-              <Box sx={{ p: 2, pt: 0 }}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => navigate(item.path)}
-                  sx={{
-                    color: item.color,
-                    borderColor: item.color,
-                    '&:hover': {
-                      borderColor: item.color,
-                      backgroundColor: `${item.color}10`
-                    }
-                  }}
-                >
-                  Access {item.title}
-                </Button>
-              </Box>
-            </Card>
-          </Grid>
-        ))}
+                <Typography variant="body2" align="center">
+                  Manage users and their roles
+                </Typography>
+              </Paper>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={4}>
+              <Paper
+                sx={{
+                  p: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  bgcolor: '#ff9800',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: '#f57c00',
+                    transform: 'scale(1.02)',
+                    transition: 'all 0.2s ease-in-out',
+                  },
+                }}
+                onClick={() => handleCardClick('/user-tasks')}
+              >
+                <TasksIcon sx={{ fontSize: 40, mb: 2 }} />
+                <Typography variant="h5" component="h2" gutterBottom>
+                  User Tasks
+                </Typography>
+                <Typography variant="body2" align="center">
+                  Manage and track user tasks
+                </Typography>
+              </Paper>
+            </Grid>
+          </>
+        )}
       </Grid>
 
-      <Paper 
-        elevation={2} 
-        sx={{ 
-          p: 3, 
-          mt: 4,
-          background: 'linear-gradient(45deg, #f5f5f5 30%, #ffffff 90%)'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <LightbulbIcon sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h6">
-            Quick Tips
-          </Typography>
-        </Box>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
-            <Typography variant="body2" color="text.secondary">
-              • Complete your profile information
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Typography variant="body2" color="text.secondary">
-              • Review the onboarding checklist
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Typography variant="body2" color="text.secondary">
-              • Connect with your team members
-            </Typography>
-          </Grid>
-        </Grid>
-      </Paper>
+      <Box sx={{ mt: 4, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+        <Typography variant="h6" gutterBottom>
+          Quick Tips
+        </Typography>
+        <Typography variant="body1" component="div">
+          • Complete your profile information
+          <br />
+          • Review the onboarding checklist
+          <br />
+          • Connect with your team members
+        </Typography>
+      </Box>
     </Container>
   );
 }

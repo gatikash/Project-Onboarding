@@ -1,146 +1,112 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import Checklist from './components/Checklist';
+import ManagerDashboard from './components/ManagerDashboard';
+import UserDashboard from './components/UserDashboard';
+import Resources from './pages/ResourcesPage';
+import UserMaster from './pages/UserMaster';
+import UserTasks from './pages/UserTasks';
+import UserChecklist from './components/UserChecklist';
 import ManagerChecklist from './components/ManagerChecklist';
-import Projects from './components/Projects';
-import ResourcesPage from './components/ResourcesPage';
+import ManagerResources from './components/ManagerResources';
+import Projects from './pages/Projects';
 import Header from './components/Header';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-
-// Protected Route component to handle authentication
-const ProtectedRoute = ({ children, user }) => {
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-  return children;
-};
-
-// Role-based route component
-const RoleBasedRoute = ({ children, allowedRoles, user }) => {
-  if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  return children;
-};
-
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#2196f3',
-    },
-    secondary: {
-      main: '#f50057',
-    },
-  },
-});
 
 function App() {
-  const [user, setUser] = useState(null);
+  const isAuthenticated = () => {
+    return localStorage.getItem('userId') !== null;
+  };
 
-  useEffect(() => {
-    // Check if user is logged in on component mount
-    const userEmail = localStorage.getItem('userEmail');
-    const userRole = localStorage.getItem('userRole');
-    if (userEmail && userRole) {
-      setUser({ email: userEmail, role: userRole });
+  const isManager = () => {
+    const roleName = localStorage.getItem('roleName');
+    return roleName === 'MANAGER';
+  };
+
+  const getDashboard = () => {
+    if (!isAuthenticated()) {
+      return <Navigate to="/login" />;
     }
-  }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userId');
-    setUser(null);
+    const isUserManager = isManager();
+    return isUserManager ? <ManagerDashboard /> : <UserDashboard />;
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        {user && <Header userEmail={user.email} onLogout={handleLogout} />}
+    <Router>
+      <div>
+        {isAuthenticated() && <Header />}
         <Routes>
-          {/* Public route - Login page */}
-          <Route 
-            path="/" 
-            element={
-              user ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Login onLogin={(userData) => {
-                  localStorage.setItem('userEmail', userData.email);
-                  localStorage.setItem('userRole', userData.role);
-                  localStorage.setItem('userId', userData.id);
-                  setUser(userData);
-                }} />
-              )
-            } 
+          <Route
+            path="/login"
+            element={!isAuthenticated() ? <Login /> : <Navigate to="/dashboard" />}
           />
-
-          {/* Protected routes */}
           <Route
             path="/dashboard"
-            element={
-              <ProtectedRoute user={user}>
-                <Dashboard />
-              </ProtectedRoute>
-            }
+            element={getDashboard()}
           />
-
-          {/* User routes */}
           <Route
-            path="/checklist"
-            element={
-              <ProtectedRoute user={user}>
-                <RoleBasedRoute allowedRoles={['USER']} user={user}>
-                  <Checklist />
-                </RoleBasedRoute>
-              </ProtectedRoute>
-            }
+            path="/resources"
+            element={isAuthenticated() ? <Resources /> : <Navigate to="/login" />}
           />
-
-          {/* Manager routes */}
           <Route
             path="/manager-checklist"
             element={
-              <ProtectedRoute user={user}>
-                <RoleBasedRoute allowedRoles={['MANAGER']} user={user}>
-                  <ManagerChecklist />
-                </RoleBasedRoute>
-              </ProtectedRoute>
+              isAuthenticated() && isManager() ? (
+                <ManagerChecklist />
+              ) : (
+                <Navigate to="/dashboard" />
+              )
             }
           />
-
-          {/* Projects route - Manager only */}
+          <Route
+            path="/manager-resources"
+            element={
+              isAuthenticated() && isManager() ? (
+                <ManagerResources />
+              ) : (
+                <Navigate to="/dashboard" />
+              )
+            }
+          />
           <Route
             path="/projects"
             element={
-              <ProtectedRoute user={user}>
-                <RoleBasedRoute allowedRoles={['MANAGER']} user={user}>
-                  <Projects />
-                </RoleBasedRoute>
-              </ProtectedRoute>
+              isAuthenticated() && isManager() ? (
+                <Projects />
+              ) : (
+                <Navigate to="/dashboard" />
+              )
             }
           />
-
-          {/* Resources route */}
           <Route
-            path="/resources"
+            path="/users"
             element={
-              <ProtectedRoute user={user}>
-                <ResourcesPage />
-              </ProtectedRoute>
+              isAuthenticated() && isManager() ? (
+                <UserMaster />
+              ) : (
+                <Navigate to="/dashboard" />
+              )
             }
           />
-
-          {/* Catch all route - redirect to dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/user-tasks"
+            element={
+              isAuthenticated() && isManager() ? (
+                <UserTasks />
+              ) : (
+                <Navigate to="/dashboard" />
+              )
+            }
+          />
+          <Route
+            path="/checklist"
+            element={isAuthenticated() ? <UserChecklist /> : <Navigate to="/login" />}
+          />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
-      </Router>
-    </ThemeProvider>
+      </div>
+    </Router>
   );
 }
 
