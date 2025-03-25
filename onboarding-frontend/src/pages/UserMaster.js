@@ -163,12 +163,49 @@ function UserMaster() {
         };
         console.log('Sending user data:', userData);
         
-        const response = await axios.post('http://localhost:3001/api/users', userData);
-        console.log('Server response:', response.data);
-        
-        if (response.data.success) {
-          setUsers([response.data.user, ...users]);
-          handleCloseDialog();
+        // First, fetch checklist items for the selected role and projects
+        try {
+          const checklistPromises = formData.projectIds.map(projectId => 
+            axios.get(`http://localhost:3001/api/checklist/manager`, {
+              params: {
+                projectId: projectId,
+                roleId: formData.roleId
+              }
+            })
+          );
+
+          const checklistResponses = await Promise.all(checklistPromises);
+          
+          // Format checklist items for each project
+          const checklistItems = [];
+          formData.projectIds.forEach((projectId, index) => {
+            const projectTasks = checklistResponses[index].data.success ? checklistResponses[index].data.tasks : [];
+            projectTasks.forEach(task => {
+              checklistItems.push({
+                project_id: projectId,
+                task_description: task.task,
+                status: 'pending'
+              });
+            });
+          });
+
+          // Add checklist items to user data
+          userData.checklistItems = checklistItems;
+          
+          console.log('Sending user data with checklist items:', userData);
+          
+          // Create user with checklist items
+          const response = await axios.post('http://localhost:3001/api/users', userData);
+          console.log('Server response:', response.data);
+          
+          if (response.data.success) {
+            setUsers([response.data.user, ...users]);
+            handleCloseDialog();
+          }
+        } catch (err) {
+          console.error('Error fetching checklist items:', err);
+          setError('Failed to fetch checklist items');
+          return;
         }
       }
     } catch (err) {

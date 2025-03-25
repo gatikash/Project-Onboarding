@@ -127,6 +127,15 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
+const RoleChip = styled(Chip)(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  fontWeight: 500,
+  fontSize: '0.75rem',
+  height: '24px',
+  marginBottom: theme.spacing(1),
+}));
+
 const ManagerResources = () => {
   const [resources, setResources] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -142,7 +151,8 @@ const ManagerResources = () => {
     project_id: '',
     category: '',
     file_url: '',
-    status: 'active'
+    status: 'active',
+    tags: []
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -227,7 +237,8 @@ const ManagerResources = () => {
         project_id: resource.project_id.toString(),
         role_id: resource.role_id.toString(),
         file_path: resource.file_path || '',
-        file_type: resource.file_type || ''
+        file_type: resource.file_type || '',
+        tags: resource.tags ? resource.tags.split(',').map(tag => tag.trim()) : []
       });
     } else {
       setEditMode(false);
@@ -240,7 +251,8 @@ const ManagerResources = () => {
         project_id: selectedProject || '',
         role_id: '',
         file_path: '',
-        file_type: ''
+        file_type: '',
+        tags: []
       });
     }
     setOpen(true);
@@ -260,6 +272,14 @@ const ManagerResources = () => {
     });
   };
 
+  const handleTagChange = (event) => {
+    const { value } = event.target;
+    setFormData(prev => ({
+      ...prev,
+      tags: value.split(',').map(tag => tag.trim()).filter(tag => tag)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -270,7 +290,8 @@ const ManagerResources = () => {
         roleId: formData.role_id,
         description: formData.description,
         file_path: formData.file_path,
-        file_type: formData.file_type
+        file_type: formData.file_type,
+        tags: formData.tags
       });
 
       // Validate required fields
@@ -291,6 +312,7 @@ const ManagerResources = () => {
         formDataWithFile.append('description', formData.description || '');
         formDataWithFile.append('projectId', formData.project_id);
         formDataWithFile.append('roleId', formData.role_id);
+        formDataWithFile.append('tags', formData.tags.join(','));
         
         const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
         formDataWithFile.append('file_type', fileExtension);
@@ -336,7 +358,8 @@ const ManagerResources = () => {
           projectId: formData.project_id,
           roleId: formData.role_id,
           file_path: formData.file_path,
-          file_type: 'link'
+          file_type: 'link',
+          tags: formData.tags
         };
 
         // Debug log for link submission
@@ -514,7 +537,7 @@ const ManagerResources = () => {
               <Grid item xs={12} sm={6} md={4} key={resource.id}>
                 <ResourceCard>
                   <ResourceCardContent>
-                    <Box display="flex" alignItems="center">
+                    <Box display="flex" alignItems="center" mb={1}>
                       <ResourceIconWrapper>
                         {getResourceIcon(resource.file_type)}
                       </ResourceIconWrapper>
@@ -522,16 +545,29 @@ const ManagerResources = () => {
                         {resource.title}
                       </ResourceTitle>
                     </Box>
+                    
+                    <RoleChip 
+                      label={resource.role_name || 'Unknown Role'} 
+                      size="small"
+                    />
+
                     <ResourceDescription>
                       {resource.description}
                     </ResourceDescription>
-                    {resource.category && (
-                      <Chip
-                        label={resource.category}
-                        size="small"
-                        sx={{ mb: 1 }}
-                      />
-                    )}
+                    
+                    <Box sx={{ mb: 2 }}>
+                      {resource.tags && resource.tags.split(',').map((tag, index) => (
+                        <Chip
+                          key={index}
+                          label={tag.trim()}
+                          size="small"
+                          sx={{ mr: 0.5, mb: 0.5 }}
+                          color="primary"
+                          variant="outlined"
+                        />
+                      ))}
+                    </Box>
+                    
                     <DownloadButton
                       variant="outlined"
                       startIcon={<DownloadIcon />}
@@ -660,6 +696,19 @@ const ManagerResources = () => {
               value={formData.description}
               onChange={handleChange}
               sx={{ mb: 2 }}
+            />
+
+            <TextField
+              margin="dense"
+              name="tags"
+              label="Tags (comma-separated)"
+              type="text"
+              fullWidth
+              value={formData.tags.join(', ')}
+              onChange={handleTagChange}
+              sx={{ mb: 2 }}
+              placeholder="e.g. documentation, guide, tutorial"
+              helperText="Enter tags separated by commas"
             />
 
             {resourceType === 'link' ? (

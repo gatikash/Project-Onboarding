@@ -137,6 +137,20 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
+const RoleChip = styled(Chip)(({ theme }) => ({
+  backgroundColor: '#F3E5F5',
+  color: '#7B1FA2',
+  fontWeight: 500,
+  fontSize: '0.75rem',
+  height: '24px',
+  marginBottom: theme.spacing(1),
+  marginRight: theme.spacing(1),
+  '&:hover': {
+    backgroundColor: '#E1BEE7',
+  },
+  border: '1px solid #CE93D8'
+}));
+
 const ManageChecklistResources = ({ projectId: defaultProjectId }) => {
   const [resources, setResources] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -454,7 +468,7 @@ const ManageChecklistResources = ({ projectId: defaultProjectId }) => {
             <Grid item xs={12} sm={6} md={4} key={resource.id}>
               <ResourceCard>
                 <ResourceCardContent>
-                  <Box display="flex" alignItems="center">
+                  <Box display="flex" alignItems="center" mb={1}>
                     <ResourceIconWrapper>
                       {getResourceIcon(resource.file_type)}
                     </ResourceIconWrapper>
@@ -462,10 +476,20 @@ const ManageChecklistResources = ({ projectId: defaultProjectId }) => {
                       {resource.title}
                     </ResourceTitle>
                   </Box>
+
+                  <Box sx={{ mb: 1 }}>
+                    <RoleChip 
+                      label={roles.find(r => r.id === resource.role_id)?.role_name || 'Unknown Role'} 
+                      size="small"
+                    />
+                  </Box>
+
                   <ResourceDescription>
                     {resource.description}
                   </ResourceDescription>
+
                   <DownloadButton
+                    variant="outlined"
                     startIcon={<DownloadIcon />}
                     onClick={() => handleDownload(resource)}
                     fullWidth
@@ -473,29 +497,12 @@ const ManageChecklistResources = ({ projectId: defaultProjectId }) => {
                     {resource.file_type?.toLowerCase() === 'link' ? 'Open Link' : 'Download'}
                   </DownloadButton>
                 </ResourceCardContent>
-                <Box 
-                  sx={{ 
-                    p: 1, 
-                    display: 'flex', 
-                    justifyContent: 'flex-end',
-                    gap: 1,
-                    borderTop: '1px solid',
-                    borderColor: 'grey.200'
-                  }}
-                >
-                  <IconButton 
-                    onClick={() => handleOpen(resource)}
-                    size="small"
-                    sx={{ color: 'primary.main' }}
-                  >
-                    <EditIcon fontSize="small" />
+                <Box sx={{ p: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                  <IconButton onClick={() => handleOpen(resource)} color="primary">
+                    <EditIcon />
                   </IconButton>
-                  <IconButton 
-                    onClick={() => handleDelete(resource.id)}
-                    size="small"
-                    sx={{ color: 'error.main' }}
-                  >
-                    <DeleteIcon fontSize="small" />
+                  <IconButton onClick={() => handleDelete(resource.id)} color="error">
+                    <DeleteIcon />
                   </IconButton>
                 </Box>
               </ResourceCard>

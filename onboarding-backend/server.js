@@ -784,13 +784,14 @@ app.post('/api/users', async (req, res) => {
   try {
     await poolConnect;
     await transaction.begin();
-    const { email, password, roleId, projectIds } = req.body;
+    const { email, password, roleId, projectIds, checklistItems } = req.body;
 
     console.log('Received user creation request:', {
       email,
       roleId,
       projectIds,
-      hasPassword: !!password
+      hasPassword: !!password,
+      checklistItemsCount: checklistItems?.length
     });
 
     // Validate required fields
@@ -833,6 +834,34 @@ app.post('/api/users', async (req, res) => {
           INSERT INTO UserProjects (user_id, project_id)
           VALUES (@userId, @projectId)
         `);
+    }
+
+    // Insert checklist items if provided
+    if (checklistItems && checklistItems.length > 0) {
+      console.log('Creating checklist items:', checklistItems.length);
+      for (const item of checklistItems) {
+        await transaction.request()
+          .input('userId', sql.Int, userId)
+          .input('projectId', sql.Int, item.project_id)
+          .input('taskDescription', sql.NVarChar, item.task_description)
+          .input('status', sql.VarChar, item.status)
+          .query(`
+            INSERT INTO UserChecklists (
+              user_id,
+              project_id,
+              task_description,
+              status,
+              created_at
+            )
+            VALUES (
+              @userId,
+              @projectId,
+              @taskDescription,
+              @status,
+              GETDATE()
+            )
+          `);
+      }
     }
 
     await transaction.commit();

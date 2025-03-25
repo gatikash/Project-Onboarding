@@ -28,11 +28,7 @@ const Projects = () => {
   const [editMode, setEditMode] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [formData, setFormData] = useState({
-    project_name: '',
-    description: '',
-    start_date: '',
-    end_date: '',
-    status: 'active'
+    project_name: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -58,21 +54,13 @@ const Projects = () => {
       setEditMode(true);
       setSelectedProject(project);
       setFormData({
-        project_name: project.project_name,
-        description: project.description || '',
-        start_date: project.start_date || '',
-        end_date: project.end_date || '',
-        status: project.status || 'active'
+        project_name: project.project_name
       });
     } else {
       setEditMode(false);
       setSelectedProject(null);
       setFormData({
-        project_name: '',
-        description: '',
-        start_date: '',
-        end_date: '',
-        status: 'active'
+        project_name: ''
       });
     }
     setOpen(true);
@@ -162,10 +150,7 @@ const Projects = () => {
           <TableHead>
             <TableRow>
               <TableCell>Project Name</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Start Date</TableCell>
-              <TableCell>End Date</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell>Created Date</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -173,10 +158,7 @@ const Projects = () => {
             {projects.map((project) => (
               <TableRow key={project.id}>
                 <TableCell>{project.project_name}</TableCell>
-                <TableCell>{project.description}</TableCell>
-                <TableCell>{new Date(project.start_date).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(project.end_date).toLocaleDateString()}</TableCell>
-                <TableCell>{project.status}</TableCell>
+                <TableCell>{new Date(project.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleOpen(project)} color="primary">
                     <EditIcon />
@@ -205,46 +187,6 @@ const Projects = () => {
               value={formData.project_name}
               onChange={handleChange}
               required
-            />
-            <TextField
-              margin="dense"
-              name="description"
-              label="Description"
-              type="text"
-              fullWidth
-              multiline
-              rows={4}
-              value={formData.description}
-              onChange={handleChange}
-            />
-            <TextField
-              margin="dense"
-              name="start_date"
-              label="Start Date"
-              type="date"
-              fullWidth
-              value={formData.start_date}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              margin="dense"
-              name="end_date"
-              label="End Date"
-              type="date"
-              fullWidth
-              value={formData.end_date}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              margin="dense"
-              name="status"
-              label="Status"
-              type="text"
-              fullWidth
-              value={formData.status}
-              onChange={handleChange}
             />
           </DialogContent>
           <DialogActions>
