@@ -1,16 +1,16 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './components/Login';
-import ManagerDashboard from './components/ManagerDashboard';
-import UserDashboard from './components/UserDashboard';
-import Resources from './pages/ResourcesPage';
-import UserMaster from './pages/UserMaster';
-import UserTasks from './pages/UserTasks';
-import UserChecklist from './components/UserChecklist';
-import ManagerChecklist from './components/ManagerChecklist';
-import ManagerResources from './components/ManagerResources';
-import Projects from './pages/Projects';
-import Header from './components/Header';
+import Login from './components/Users/Login';
+import ManagerDashboard from './components/Manager/ManagerDashboard';
+import UserDashboard from './components/Users/UserDashboard';
+import Resources from './components/Manager/ResourcesPage';
+import UserMaster from './components/Users/UserMaster';
+import UserTasks from './components/Users/UserTasks';
+import UserChecklist from './components/Users/UserChecklist';
+import ManagerChecklist from './components/Manager/ManagerChecklist';
+import ManagerResources from './components/Manager/ManagerResources';
+import Projects from './components/Manager/Projects';
+import Header from './components/Common/Header';
 
 function App() {
   const isAuthenticated = () => {

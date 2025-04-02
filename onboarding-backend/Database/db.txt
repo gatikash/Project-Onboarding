@@ -1,0 +1,303 @@
+USE [onboarding_db]
+GO
+/****** Object:  Table [dbo].[projects]    Script Date: 25-03-2025 11:38:15 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[projects](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[project_name] [varchar](255) NOT NULL,
+	[created_at] [datetime] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[resources]    Script Date: 25-03-2025 11:38:15 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[resources](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[title] [varchar](255) NOT NULL,
+	[description] [text] NULL,
+	[file_path] [varchar](255) NULL,
+	[file_type] [varchar](50) NULL,
+	[project_id] [int] NOT NULL,
+	[created_at] [datetime] NULL,
+	[role_id] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[roles]    Script Date: 25-03-2025 11:38:15 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[roles](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[role_name] [varchar](50) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[tasks]    Script Date: 25-03-2025 11:38:15 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tasks](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[task] [varchar](255) NOT NULL,
+	[status] [varchar](50) NULL,
+	[project_id] [int] NOT NULL,
+	[created_at] [datetime] NULL,
+	[role_id] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[UserChecklists]    Script Date: 25-03-2025 11:38:15 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[UserChecklists](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[user_id] [int] NOT NULL,
+	[project_id] [int] NOT NULL,
+	[task_description] [nvarchar](500) NOT NULL,
+	[status] [varchar](20) NULL,
+	[due_date] [date] NULL,
+	[priority] [varchar](20) NULL,
+	[category] [varchar](50) NULL,
+	[assigned_by] [int] NULL,
+	[created_at] [datetime] NULL,
+	[completed_at] [datetime] NULL,
+	[notes] [nvarchar](1000) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[UserProjects]    Script Date: 25-03-2025 11:38:15 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[UserProjects](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[user_id] [int] NOT NULL,
+	[project_id] [int] NOT NULL,
+	[created_at] [datetime] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[users]    Script Date: 25-03-2025 11:38:15 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[users](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[email] [varchar](255) NOT NULL,
+	[password] [varchar](255) NOT NULL,
+	[role_id] [int] NOT NULL,
+	[created_at] [datetime] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+SET IDENTITY_INSERT [dbo].[projects] ON 
+GO
+INSERT [dbo].[projects] ([id], [project_name], [created_at]) VALUES (1, N'Default Project', CAST(N'2025-03-22T01:27:44.503' AS DateTime))
+GO
+INSERT [dbo].[projects] ([id], [project_name], [created_at]) VALUES (2, N'aa1', CAST(N'2025-03-22T14:25:07.810' AS DateTime))
+GO
+INSERT [dbo].[projects] ([id], [project_name], [created_at]) VALUES (3, N'testttttt', CAST(N'2025-03-22T19:25:57.433' AS DateTime))
+GO
+SET IDENTITY_INSERT [dbo].[projects] OFF
+GO
+SET IDENTITY_INSERT [dbo].[resources] ON 
+GO
+INSERT [dbo].[resources] ([id], [title], [description], [file_path], [file_type], [project_id], [created_at], [role_id]) VALUES (1, N'Development Guidelines', N'Coding standards and best practices', N'/resources/guidelines.pdf', N'PDF', 1, CAST(N'2025-03-22T01:28:20.000' AS DateTime), 1)
+GO
+INSERT [dbo].[resources] ([id], [title], [description], [file_path], [file_type], [project_id], [created_at], [role_id]) VALUES (2, N'API Documentation', N'REST API endpoints documentation', N'/resources/api-docs.pdf', N'PDF', 1, CAST(N'2025-03-22T01:28:20.000' AS DateTime), 2)
+GO
+INSERT [dbo].[resources] ([id], [title], [description], [file_path], [file_type], [project_id], [created_at], [role_id]) VALUES (4, N'aaaaaa', N'aaa', N'1742674244663-736073630-Gatikash.Bajaj_Resume_Full_Stack.docx', N'file', 3, CAST(N'2025-03-23T01:40:44.690' AS DateTime), 1)
+GO
+INSERT [dbo].[resources] ([id], [title], [description], [file_path], [file_type], [project_id], [created_at], [role_id]) VALUES (5, N'1742674244663-736073630-Gatikash', N'', N'1742826545546-8189875-1742674244663_736073630_Gatikash.Bajaj_Resume_Full_Stack.docx', N'file', 3, CAST(N'2025-03-24T19:59:05.567' AS DateTime), 2)
+GO
+INSERT [dbo].[resources] ([id], [title], [description], [file_path], [file_type], [project_id], [created_at], [role_id]) VALUES (6, N'1742674244663-736073630-Gatikash', N'dddd', N'1742826902454-936927545-1742674244663_736073630_Gatikash.Bajaj_Resume_Full_Stack.docx', N'file', 3, CAST(N'2025-03-24T20:05:02.490' AS DateTime), 4)
+GO
+INSERT [dbo].[resources] ([id], [title], [description], [file_path], [file_type], [project_id], [created_at], [role_id]) VALUES (7, N'test1', N'test', N'https://google.com', N'link', 1, CAST(N'2025-03-24T20:26:54.693' AS DateTime), 2)
+GO
+INSERT [dbo].[resources] ([id], [title], [description], [file_path], [file_type], [project_id], [created_at], [role_id]) VALUES (8, N'1742826545546-8189875-1742674244663_736073630_Gatikash', N'hjhjhjhj', N'1742828354491-43932897-1742826545546_8189875_1742674244663_736073630_Gatikash.Bajaj_Resume_Full_Stack__1_.docx', N'file', 3, CAST(N'2025-03-24T20:29:14.520' AS DateTime), 4)
+GO
+INSERT [dbo].[resources] ([id], [title], [description], [file_path], [file_type], [project_id], [created_at], [role_id]) VALUES (9, N'1742826545546-8189875-1742674244663_736073630_Gatikash', N'kuhkuhkhkj', N'1742828424906-178317252-1742826545546_8189875_1742674244663_736073630_Gatikash.Bajaj_Resume_Full_Stack.docx', N'file', 1, CAST(N'2025-03-24T20:30:24.963' AS DateTime), 4)
+GO
+SET IDENTITY_INSERT [dbo].[resources] OFF
+GO
+SET IDENTITY_INSERT [dbo].[roles] ON 
+GO
+INSERT [dbo].[roles] ([id], [role_name]) VALUES (4, N'AUTOMATION_QA')
+GO
+INSERT [dbo].[roles] ([id], [role_name]) VALUES (2, N'DEVELOPER')
+GO
+INSERT [dbo].[roles] ([id], [role_name]) VALUES (1, N'MANAGER')
+GO
+INSERT [dbo].[roles] ([id], [role_name]) VALUES (3, N'QA')
+GO
+SET IDENTITY_INSERT [dbo].[roles] OFF
+GO
+SET IDENTITY_INSERT [dbo].[tasks] ON 
+GO
+INSERT [dbo].[tasks] ([id], [task], [status], [project_id], [created_at], [role_id]) VALUES (1, N'Complete onboarding documentation', N'pending', 1, CAST(N'2025-03-22T01:28:06.890' AS DateTime), 1)
+GO
+INSERT [dbo].[tasks] ([id], [task], [status], [project_id], [created_at], [role_id]) VALUES (2, N'Set up development environment', N'pending', 1, CAST(N'2025-03-22T01:28:06.890' AS DateTime), 1)
+GO
+INSERT [dbo].[tasks] ([id], [task], [status], [project_id], [created_at], [role_id]) VALUES (3, N'Review project architecture', N'completed', 1, CAST(N'2025-03-22T01:28:06.890' AS DateTime), 2)
+GO
+INSERT [dbo].[tasks] ([id], [task], [status], [project_id], [created_at], [role_id]) VALUES (4, N'Team introduction', N'pending', 1, CAST(N'2025-03-22T01:28:06.890' AS DateTime), 3)
+GO
+INSERT [dbo].[tasks] ([id], [task], [status], [project_id], [created_at], [role_id]) VALUES (5, N'aa1manager', N'pending', 1, CAST(N'2025-03-22T12:50:44.280' AS DateTime), 1)
+GO
+INSERT [dbo].[tasks] ([id], [task], [status], [project_id], [created_at], [role_id]) VALUES (6, N'test', NULL, 2, CAST(N'2025-03-23T11:45:47.093' AS DateTime), 4)
+GO
+SET IDENTITY_INSERT [dbo].[tasks] OFF
+GO
+SET IDENTITY_INSERT [dbo].[UserChecklists] ON 
+GO
+INSERT [dbo].[UserChecklists] ([id], [user_id], [project_id], [task_description], [status], [due_date], [priority], [category], [assigned_by], [created_at], [completed_at], [notes]) VALUES (1, 10, 1, N'Review project architecture', N'pending', CAST(N'2025-03-30' AS Date), N'medium', N'project', 1, CAST(N'2025-03-23T12:17:35.257' AS DateTime), NULL, NULL)
+GO
+SET IDENTITY_INSERT [dbo].[UserChecklists] OFF
+GO
+SET IDENTITY_INSERT [dbo].[UserProjects] ON 
+GO
+INSERT [dbo].[UserProjects] ([id], [user_id], [project_id], [created_at]) VALUES (1, 2, 3, CAST(N'2025-03-23T02:27:39.260' AS DateTime))
+GO
+INSERT [dbo].[UserProjects] ([id], [user_id], [project_id], [created_at]) VALUES (2, 3, 1, CAST(N'2025-03-23T11:53:31.547' AS DateTime))
+GO
+INSERT [dbo].[UserProjects] ([id], [user_id], [project_id], [created_at]) VALUES (3, 4, 1, CAST(N'2025-03-23T11:59:12.963' AS DateTime))
+GO
+INSERT [dbo].[UserProjects] ([id], [user_id], [project_id], [created_at]) VALUES (4, 5, 1, CAST(N'2025-03-23T12:05:35.290' AS DateTime))
+GO
+INSERT [dbo].[UserProjects] ([id], [user_id], [project_id], [created_at]) VALUES (5, 6, 1, CAST(N'2025-03-23T12:08:03.140' AS DateTime))
+GO
+INSERT [dbo].[UserProjects] ([id], [user_id], [project_id], [created_at]) VALUES (6, 7, 1, CAST(N'2025-03-23T12:10:30.070' AS DateTime))
+GO
+INSERT [dbo].[UserProjects] ([id], [user_id], [project_id], [created_at]) VALUES (1009, 10, 1, CAST(N'2025-03-24T20:20:24.150' AS DateTime))
+GO
+INSERT [dbo].[UserProjects] ([id], [user_id], [project_id], [created_at]) VALUES (1013, 1005, 1, CAST(N'2025-03-24T21:11:12.507' AS DateTime))
+GO
+SET IDENTITY_INSERT [dbo].[UserProjects] OFF
+GO
+SET IDENTITY_INSERT [dbo].[users] ON 
+GO
+INSERT [dbo].[users] ([id], [email], [password], [role_id], [created_at]) VALUES (1, N'manager@test.com', N'manager123', 1, CAST(N'2025-03-22T01:27:52.470' AS DateTime))
+GO
+INSERT [dbo].[users] ([id], [email], [password], [role_id], [created_at]) VALUES (2, N'user@test.com', N'user123', 2, CAST(N'2025-03-22T01:27:52.470' AS DateTime))
+GO
+INSERT [dbo].[users] ([id], [email], [password], [role_id], [created_at]) VALUES (3, N'user2@test.com', N'user1234', 2, CAST(N'2025-03-23T11:53:31.520' AS DateTime))
+GO
+INSERT [dbo].[users] ([id], [email], [password], [role_id], [created_at]) VALUES (4, N'user3@test.com', N'user1234', 2, CAST(N'2025-03-23T11:59:12.950' AS DateTime))
+GO
+INSERT [dbo].[users] ([id], [email], [password], [role_id], [created_at]) VALUES (5, N'user4@test.com', N'user1234', 2, CAST(N'2025-03-23T12:05:35.270' AS DateTime))
+GO
+INSERT [dbo].[users] ([id], [email], [password], [role_id], [created_at]) VALUES (6, N'user5@test.com', N'user12345', 2, CAST(N'2025-03-23T12:08:03.130' AS DateTime))
+GO
+INSERT [dbo].[users] ([id], [email], [password], [role_id], [created_at]) VALUES (7, N'user6@test.com', N'user6', 2, CAST(N'2025-03-23T12:10:30.060' AS DateTime))
+GO
+INSERT [dbo].[users] ([id], [email], [password], [role_id], [created_at]) VALUES (10, N'user7@test.com', N'user7', 4, CAST(N'2025-03-23T12:17:35.227' AS DateTime))
+GO
+INSERT [dbo].[users] ([id], [email], [password], [role_id], [created_at]) VALUES (1005, N'user8@test.com', N'12345', 2, CAST(N'2025-03-24T21:10:33.417' AS DateTime))
+GO
+SET IDENTITY_INSERT [dbo].[users] OFF
+GO
+SET ANSI_PADDING ON
+GO
+/****** Object:  Index [UQ__roles__783254B13BE91B7D]    Script Date: 25-03-2025 11:38:15 ******/
+ALTER TABLE [dbo].[roles] ADD UNIQUE NONCLUSTERED 
+(
+	[role_name] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+/****** Object:  Index [UQ_UserProjects]    Script Date: 25-03-2025 11:38:15 ******/
+ALTER TABLE [dbo].[UserProjects] ADD  CONSTRAINT [UQ_UserProjects] UNIQUE NONCLUSTERED 
+(
+	[user_id] ASC,
+	[project_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+SET ANSI_PADDING ON
+GO
+/****** Object:  Index [UQ__users__AB6E61644A6FB27D]    Script Date: 25-03-2025 11:38:15 ******/
+ALTER TABLE [dbo].[users] ADD UNIQUE NONCLUSTERED 
+(
+	[email] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[projects] ADD  DEFAULT (getdate()) FOR [created_at]
+GO
+ALTER TABLE [dbo].[resources] ADD  DEFAULT (getdate()) FOR [created_at]
+GO
+ALTER TABLE [dbo].[tasks] ADD  DEFAULT ('pending') FOR [status]
+GO
+ALTER TABLE [dbo].[tasks] ADD  DEFAULT (getdate()) FOR [created_at]
+GO
+ALTER TABLE [dbo].[UserChecklists] ADD  DEFAULT ('pending') FOR [status]
+GO
+ALTER TABLE [dbo].[UserChecklists] ADD  DEFAULT ('medium') FOR [priority]
+GO
+ALTER TABLE [dbo].[UserChecklists] ADD  DEFAULT (getdate()) FOR [created_at]
+GO
+ALTER TABLE [dbo].[UserProjects] ADD  DEFAULT (getdate()) FOR [created_at]
+GO
+ALTER TABLE [dbo].[users] ADD  DEFAULT (getdate()) FOR [created_at]
+GO
+ALTER TABLE [dbo].[resources]  WITH CHECK ADD  CONSTRAINT [FK_Resources_Projects] FOREIGN KEY([project_id])
+REFERENCES [dbo].[projects] ([id])
+GO
+ALTER TABLE [dbo].[resources] CHECK CONSTRAINT [FK_Resources_Projects]
+GO
+ALTER TABLE [dbo].[tasks]  WITH CHECK ADD  CONSTRAINT [FK_Tasks_Projects] FOREIGN KEY([project_id])
+REFERENCES [dbo].[projects] ([id])
+GO
+ALTER TABLE [dbo].[tasks] CHECK CONSTRAINT [FK_Tasks_Projects]
+GO
+ALTER TABLE [dbo].[UserChecklists]  WITH CHECK ADD FOREIGN KEY([assigned_by])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[UserChecklists]  WITH CHECK ADD FOREIGN KEY([project_id])
+REFERENCES [dbo].[projects] ([id])
+GO
+ALTER TABLE [dbo].[UserChecklists]  WITH CHECK ADD FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[UserProjects]  WITH CHECK ADD FOREIGN KEY([project_id])
+REFERENCES [dbo].[projects] ([id])
+GO
+ALTER TABLE [dbo].[UserProjects]  WITH CHECK ADD FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[users]  WITH CHECK ADD  CONSTRAINT [FK_Users_Roles] FOREIGN KEY([role_id])
+REFERENCES [dbo].[roles] ([id])
+GO
+ALTER TABLE [dbo].[users] CHECK CONSTRAINT [FK_Users_Roles]
+GO

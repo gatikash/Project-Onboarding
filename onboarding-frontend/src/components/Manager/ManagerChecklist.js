@@ -29,7 +29,7 @@ import {
 import { styled } from '@mui/material/styles';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import ManageChecklistResources from '../pages/ManageChecklistResources';
+import ManageChecklistResources from './ManageChecklistResources';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
